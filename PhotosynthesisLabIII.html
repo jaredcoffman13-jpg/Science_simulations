@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photosynthesis Virtual Lab</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f9f4;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1, h2 {
+        color: #2c5e1a;
+        text-align: center;
+    }
+    
+    /* Visual Stage CSS */
+    .visual-stage {
+        position: relative;
+        height: 300px;
+        background: #1a1a2e;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+    #lamp-light {
+        position: absolute;
+        top: -50px;
+        width: 150%;
+        height: 150%;
+        pointer-events: none;
+        transition: background 0.3s ease;
+        mix-blend-mode: screen;
+    }
+    #plant {
+        font-size: 100px;
+        line-height: 1;
+        z-index: 2;
+        transform-origin: bottom center;
+        /* Changed to 0.8s smooth transition for growing/shrinking/fading */
+        transition: transform 0.8s ease-in-out, filter 0.8s ease-in-out; 
+        margin-bottom: -15px;
+        transform: scale(0.8); /* Starting size */
+    }
+    #soil {
+        width: 100%;
+        height: 60px;
+        background: hsl(30, 40%, 60%);
+        transition: background 0.3s ease;
+        z-index: 3;
+        border-top: 3px solid rgba(0,0,0,0.1);
+    }
+    
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .controls, .readouts {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        flex: 1;
+        min-width: 300px;
+    }
+    .slider-group {
+        margin-bottom: 15px;
+    }
+    label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+    input[type="range"] {
+        width: 100%;
+        cursor: pointer;
+    }
+    select, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s;
+        font-size: 18px;
+        padding: 15px;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    .output-display {
+        background: #e8f5e9;
+        border: 2px solid #4CAF50;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .output-display h3 {
+        margin: 0 0 10px 0;
+        color: #2c5e1a;
+    }
+    .output-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #1b400f;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #2c5e1a;
+        color: white;
+    }
+</style>
+</head>
+<body>
+
+<h1>Photosynthesis Virtual Lab</h1>
+<p style="text-align: center;">Set your environmental factors, then run a test to observe the plant.</p>
+
+<div class="visual-stage">
+    <div id="lamp-light"></div>
+    <div id="plant">🪴</div>
+    <div id="soil"></div>
+</div>
+
+<div class="container">
+    <div class="controls">
+        <h2>Environmental Factors</h2>
+        
+        <div class="slider-group">
+            <label for="lightSlider">Light Intensity: <span id="lightVal">0</span>%</label>
+            <input type="range" id="lightSlider" min="0" max="100" value="0">
+        </div>
+        
+        <div class="slider-group">
+            <label for="colorSelect">Light Color:</label>
+            <select id="colorSelect">
+                <option value="0.90" data-color="255, 50, 50">Red</option>
+                <option value="0.70" data-color="255, 165, 0">Orange</option>
+                <option value="0.40" data-color="255, 255, 50">Yellow</option>
+                <option value="0.10" data-color="50, 255, 50">Green</option>
+                <option value="0.95" data-color="50, 100, 255">Blue</option>
+                <option value="0.30" data-color="75, 0, 130">Indigo</option>
+                <option value="0.95" data-color="238, 130, 238">Violet</option>
+            </select>
+        </div>
+        
+        <div class="slider-group">
+            <label for="co2Slider">CO2 Concentration: <span id="co2Val">0</span> ppm</label>
+            <input type="range" id="co2Slider" min="0" max="1000" value="0">
+        </div>
+        
+        <div class="slider-group">
+            <label for="waterSlider">Soil Water Saturation: <span id="waterVal">0</span>%</label>
+            <input type="range" id="waterSlider" min="0" max="100" value="0">
+        </div>
+        
+        <div class="slider-group">
+            <label for="tempSlider">Temperature: <span id="tempVal">25</span> °C</label>
+            <input type="range" id="tempSlider" min="0" max="50" value="25">
+        </div>
+    </div>
+    
+    <div class="readouts">
+        <h2>Plant Production</h2>
+        
+        <div class="output-display">
+            <h3>Oxygen Released</h3>
+            <div class="output-value"><span id="o2Output">--</span> mL/hr</div>
+        </div>
+        
+        <div class="output-display">
+            <h3>Glucose Produced</h3>
+            <div class="output-value"><span id="glucoseOutput">--</span> mg/hr</div>
+        </div>
+        
+        <button id="testBtn">Test & Record Data</button>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Light (%)</th>
+            <th>Color</th>
+            <th>CO2 (ppm)</th>
+            <th>Water (%)</th>
+            <th>Temp (°C)</th>
+            <th>O2 (mL/hr)</th>
+            <th>Glucose (mg/hr)</th>
+        </tr>
+    </thead>
+    <tbody id="dataTableBody">
+    </tbody>
+</table>
+
+<script>
+    const MAX_O2 = 25.0;
+    const MAX_GLUCOSE = 18.0;
+    
+    const lightSlider = document.getElementById("lightSlider");
+    const colorSelect = document.getElementById("colorSelect");
+    const co2Slider = document.getElementById("co2Slider");
+    const waterSlider = document.getElementById("waterSlider");
+    const tempSlider = document.getElementById("tempSlider");
+    
+    const o2OutputDisplay = document.getElementById("o2Output");
+    const glucoseOutputDisplay = document.getElementById("glucoseOutput");
+    const testBtn = document.getElementById("testBtn");
+    const dataTableBody = document.getElementById("dataTableBody");
+    
+    // Visual elements
+    const lampLight = document.getElementById("lamp-light");
+    const soil = document.getElementById("soil");
+    const plant = document.getElementById("plant");
+    
+    // Function 1: Updates slider numbers and environment visuals instantly
+    function updateEnvironment() {
+        let light = parseFloat(lightSlider.value);
+        let water = parseFloat(waterSlider.value);
+        
+        // Update text labels
+        document.getElementById("lightVal").innerText = lightSlider.value;
+        document.getElementById("co2Val").innerText = co2Slider.value;
+        document.getElementById("waterVal").innerText = waterSlider.value;
+        document.getElementById("tempVal").innerText = tempSlider.value;
+        
+        // Update Lamp Color and Intensity
+        let intensity = light / 100;
+        let selectedOption = colorSelect.options[colorSelect.selectedIndex];
+        let rgbColor = selectedOption.getAttribute("data-color");
+        lampLight.style.background = `radial-gradient(circle at top, rgba(${rgbColor}, ${intensity}) 0%, rgba(${rgbColor}, 0) 70%)`;
+        
+        // Update Soil Color
+        let soilDarkness = 60 - (water * 0.35);
+        soil.style.background = `hsl(30, 40%, ${soilDarkness}%)`;
+    }
+    
+    // Function 2: Runs the math, animates the plant, and logs data ONLY when button is clicked
+    function runTest() {
+        let light = parseFloat(lightSlider.value);
+        let co2 = parseFloat(co2Slider.value);
+        let water = parseFloat(waterSlider.value);
+        let temp = parseFloat(tempSlider.value);
+        let colorMultiplier = parseFloat(colorSelect.value);
+        
+        // --- Core Math ---
+        let lightEff = Math.min(light / 50.0, 1.0);
+        let co2Eff = Math.min(co2 / 290.0, 1.0);
+        let waterEff = Math.min(water / 40.0, 1.0);
+        
+        let limitingFactor = Math.min(lightEff, co2Eff, waterEff);
+        let tempEff = Math.exp(-Math.pow(temp - 25, 2) / 150);
+        let overallRate = limitingFactor * colorMultiplier * tempEff;
+        
+        let o2Output = overallRate * MAX_O2;
+        let glucoseOutput = overallRate * MAX_GLUCOSE;
+        
+        if (light < 5 && co2 > 0 && water > 0) {
+            let residualEnergy = 0.5 * Math.min(co2Eff, waterEff) * tempEff;
+            glucoseOutput += residualEnergy;
+        }
+        
+        // Update Readouts
+        o2OutputDisplay.innerText = o2Output.toFixed(1);
+        glucoseOutputDisplay.innerText = glucoseOutput.toFixed(1);
+        
+        // --- Plant Animation Math ---
+        let scale = 0.8 + (overallRate * 0.4); // Ranges from 0.8 (bad) to 1.2 (perfect)
+        let grayscale = 0;
+        let brightness = 100;
+        
+        // If conditions are awful (extreme temps or completely starved)
+        if (overallRate < 0.1 || temp > 40 || temp < 5) {
+            scale = 0.6; // Shrink
+            grayscale = 60; // Lose color
+            brightness = 70; // Darken
+        } else if (overallRate > 0.8) {
+            // Excellent conditions
+            brightness = 110; // Extra vibrant
+        }
+        
+        // Apply animation
+        plant.style.transform = `scale(${scale})`;
+        plant.style.filter = `grayscale(${grayscale}%) brightness(${brightness}%)`;
+        
+        // --- Log to Table ---
+        let row = document.createElement("tr");
+        let colorText = colorSelect.options[colorSelect.selectedIndex].text;
+        
+        row.innerHTML = `
+            <td>${lightSlider.value}</td>
+            <td>${colorText}</td>
+            <td>${co2Slider.value}</td>
+            <td>${waterSlider.value}</td>
+            <td>${tempSlider.value}</td>
+            <td><strong>${o2Output.toFixed(1)}</strong></td>
+            <td><strong>${glucoseOutput.toFixed(1)}</strong></td>
+        `;
+        // Put the newest data at the top of the list so they don't have to scroll down
+        dataTableBody.insertBefore(row, dataTableBody.firstChild); 
+    }
+    
+    // Listeners for real-time environment changes
+    lightSlider.addEventListener("input", updateEnvironment);
+    colorSelect.addEventListener("change", updateEnvironment);
+    co2Slider.addEventListener("input", updateEnvironment);
+    waterSlider.addEventListener("input", updateEnvironment);
+    tempSlider.addEventListener("input", updateEnvironment);
+    
+    // Listener for the Test button
+    testBtn.addEventListener("click", runTest);
+    
+    // Run once on load to set the initial scene
+    updateEnvironment();
+</script>
+</body>
+</html>
